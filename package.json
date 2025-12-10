@@ -1,0 +1,28 @@
+{
+  "name": "api.foreignrateapi.com",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch index.ts",
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "geoip-lite": "^1.4.10",
+    "node-cache": "^5.1.2",
+    "request-ip": "^3.3.0",
+    "resend": "^6.1.2",
+    "tsx": "^4.20.6"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/geoip-lite": "^1.4.4",
+    "@types/node": "^24.5.2",
+    "@types/request-ip": "^0.0.41",
+    "typescript": "^5.9.2"
+  }
+}
