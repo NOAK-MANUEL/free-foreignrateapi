@@ -88,8 +88,11 @@ app.use(
     if (fileSize === 1000) {
       const data = fs.readFileSync("./logs.txt", "utf8");
 
-      sendEmail(data);
-      fs.rmSync("./logs.txt");
+      sendEmail(data)
+        .then(() => {
+          fs.rmSync("./logs.txt");
+        })
+        .catch((err) => console.log(err.message));
     }
     next();
   }

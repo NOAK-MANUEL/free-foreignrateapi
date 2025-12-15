@@ -49,9 +49,9 @@ export async function checkExchangeData(from: string) {
   return exchangeData;
 }
 
-export const sendEmail = (data: string) => {
+export const sendEmail = async (data: string) => {
   const resend = new Resend(process.env.MAIL_KEY);
-  resend.emails.send({
+  await resend.emails.send({
     from: "Foreign Rate API Update <noreply@foreignrateapi.com>",
     to: "info.foreignrateapi.com",
     subject: "Update",
