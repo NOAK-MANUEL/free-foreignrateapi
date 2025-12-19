@@ -1,5 +1,5 @@
 import NodeCache from "node-cache";
-import { Resend } from "resend";
+// import { Resend } from "resend";
 
 type CurrencyType = {
   nextUpdate: Date;
@@ -49,20 +49,20 @@ export async function checkExchangeData(from: string) {
   return exchangeData;
 }
 
-export const sendEmail = async (data: string) => {
-  const resend = new Resend(process.env.MAIL_KEY);
-  await resend.emails.send({
-    from: "Foreign Rate API Update <noreply@foreignrateapi.com>",
-    to: "info.foreignrateapi.com",
-    subject: "Update",
-    html: `
-    <div style="font-family: Arial, sans-serif; background-color: #f4f7f9; padding: 10px;">
-      <div style="max-width: 600px; margin: auto; background-color: #ffffff; border: 1px solid #dddddd; border-radius: 8px; padding: 30px;">
-       
-       ${data}
-       
-      </div>
-    </div>
-  `,
-  });
-};
+// export const sendEmail = async (data: string) => {
+//   const resend = new Resend(process.env.MAIL_KEY);
+//   await resend.emails.send({
+//     from: "Foreign Rate API Update <noreply@foreignrateapi.com>",
+//     to: "info.foreignrateapi.com",
+//     subject: "Update",
+//     html: `
+//     <div style="font-family: Arial, sans-serif; background-color: #f4f7f9; padding: 10px;">
+//       <div style="max-width: 600px; margin: auto; background-color: #ffffff; border: 1px solid #dddddd; border-radius: 8px; padding: 30px;">
+
+//        ${data}
+
+//       </div>
+//     </div>
+//   `,
+//   });
+// };

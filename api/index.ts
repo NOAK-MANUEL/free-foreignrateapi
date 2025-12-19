@@ -1,14 +1,11 @@
 import { Request, Response } from "express";
 import requestIp from "request-ip";
 import geoip from "geoip-lite";
-import dot from "dotenv";
 import express from "express";
 import cors from "cors";
 import { currencyData } from "../currencyData.js";
-import { checkExchangeData, sendEmail } from "../actions.js";
-import fs from "fs";
+import { checkExchangeData } from "../actions.js";
 import NodeCache from "node-cache";
-dot.config({ path: ".env" });
 
 declare global {
   namespace Express {
@@ -72,28 +69,14 @@ app.use(
       });
     }
     nodeCache.set(ip, Number(userUsage) + 1);
-    fs.appendFileSync(
-      "./logs.txt",
-      "\n" +
-        JSON.stringify({
-          ip,
-          userCountry,
-          userUsage,
-          date: new Date().toDateString(),
-          time: new Date().toTimeString(),
-        })
-    );
+    console.log({
+      ip,
+      userCountry,
+      userUsage,
+      date: new Date().toDateString(),
+      time: new Date().toTimeString(),
+    });
 
-    const fileSize = fs.statSync("./logs.txt").size;
-    if (fileSize === 1000) {
-      const data = fs.readFileSync("./logs.txt", "utf8");
-
-      sendEmail(data)
-        .then(() => {
-          fs.rmSync("./logs.txt");
-        })
-        .catch((err) => console.log(err.message));
-    }
     next();
   }
 );
@@ -152,7 +135,6 @@ app.get("/convert", async (req: Request, res: Response) => {
       success: false,
       message: error instanceof Error ? error.message : "Unknown error",
     });
-  } finally {
   }
 });
 
@@ -195,7 +177,6 @@ app.get("/auto-convert", async (req: Request, res: Response) => {
       success: false,
       message: error instanceof Error ? error.message : "Unknown error",
     });
-  } finally {
   }
 });
 
@@ -260,7 +241,6 @@ app.get("/auto-toggle", async (req: Request, res: Response) => {
       success: false,
       message: error instanceof Error ? error.message : "Unknown error",
     });
-  } finally {
   }
 });
 
