@@ -17,6 +17,10 @@ const currencyCache = new CurrencyClass({ stdTTL: 86400 });
 
 export async function fetchData(baseCode: string) {
   let response = await fetch(process.env.EXCHANGE_API + baseCode.toUpperCase());
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
   let data: any = await response.json();
 
   if (data.result !== "success") {

@@ -6,6 +6,9 @@ import cors from "cors";
 import { currencyData } from "../currencyData.js";
 import { checkExchangeData } from "../actions.js";
 import NodeCache from "node-cache";
+import dot from "dotenv";
+
+dot.config({ path: ".env" });
 
 declare global {
   namespace Express {
@@ -246,6 +249,10 @@ app.get("/auto-toggle", async (req: Request, res: Response) => {
 
 app.use((req: Request, res: Response) => {
   res.status(404).send("Path not found");
+});
+
+app.listen(8000, () => {
+  console.log("ks");
 });
 
 export default app;
