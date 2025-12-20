@@ -251,8 +251,4 @@ app.use((req: Request, res: Response) => {
   res.status(404).send("Path not found");
 });
 
-app.listen(8000, () => {
-  console.log("ks");
-});
-
 export default app;
