@@ -1,4 +1,5 @@
 import NodeCache from "node-cache";
+import prisma from "./prisma";
 // import { Resend } from "resend";
 
 type CurrencyType = {
@@ -51,6 +52,24 @@ export async function checkExchangeData(from: string) {
     exchangeData = currencyCache.getData(from);
   }
   return exchangeData;
+}
+
+export async function saveSingleRate(from: string, to: string, rate: number) {
+  try {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const dataExist = await prisma.singleRate.findFirst({
+      where: { date: { gte: todayStart, lte: todayEnd }, from: from, to: to },
+    });
+
+    if (!dataExist) {
+      await prisma.singleRate.create({ data: { from, to, amountTo: rate } });
+    }
+  } catch (error) {}
 }
 
 // export const sendEmail = async (data: string) => {

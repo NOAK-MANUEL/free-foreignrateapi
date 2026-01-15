@@ -4,9 +4,10 @@ import geoip from "geoip-lite";
 import express from "express";
 import cors from "cors";
 import { currencyData } from "../currencyData.js";
-import { checkExchangeData } from "../actions.js";
+import { checkExchangeData, saveSingleRate } from "../actions.js";
 import NodeCache from "node-cache";
 import dot from "dotenv";
+import prisma from "../prisma.js";
 
 dot.config({ path: ".env" });
 
@@ -91,8 +92,9 @@ type ExchangeRates = {
 };
 
 app.get("/convert", async (req: Request, res: Response) => {
+  const { from, to, amount } = req.query;
+  let rate: number = 0;
   try {
-    const { from, to, amount } = req.query;
     if (!from || !to || !amount) {
       return res.status(400).json({
         success: false,
@@ -118,7 +120,7 @@ app.get("/convert", async (req: Request, res: Response) => {
       });
     }
     const data = response.data as ExchangeRates;
-    const rate = data[parsed_to] ?? 0;
+    rate = data[parsed_to] ?? 0;
 
     const totalAmount = Number(rate * Number(amount ?? 0));
     const { symbol, code, currency } = targetedCurrency;
@@ -138,22 +140,25 @@ app.get("/convert", async (req: Request, res: Response) => {
       success: false,
       message: error instanceof Error ? error.message : "Unknown error",
     });
+  } finally {
+    if (rate !== 0) {
+      await saveSingleRate(from!.toString(), to!.toString(), rate);
+    }
   }
 });
 
 app.get("/auto-convert", async (req: Request, res: Response) => {
   const { defaultCountry, amount, from } = req.query;
 
+  let ip = req.geo?.country ?? defaultCountry ?? "US";
+  let rate: number = 0;
+  const {
+    code,
+    symbol,
+    currency,
+  }: { code: string; symbol: string; currency: string } =
+    currencyData[String(ip)];
   try {
-    let ip = req.geo?.country ?? defaultCountry ?? "US";
-
-    const {
-      code,
-      symbol,
-      currency,
-    }: { code: string; symbol: string; currency: string } =
-      currencyData[String(ip)];
-
     let response = await checkExchangeData(String(from).toUpperCase() ?? "USD");
 
     if (!response) {
@@ -161,7 +166,7 @@ app.get("/auto-convert", async (req: Request, res: Response) => {
     }
 
     const data = response.data as ExchangeRates;
-    const rate = data[code] ?? 0;
+    rate = data[code] ?? 0;
 
     const totalAmount = Number(rate * Number(amount ?? 0));
 
@@ -180,6 +185,10 @@ app.get("/auto-convert", async (req: Request, res: Response) => {
       success: false,
       message: error instanceof Error ? error.message : "Unknown error",
     });
+  } finally {
+    if (rate !== 0) {
+      saveSingleRate(from!.toString(), code, rate);
+    }
   }
 });
 
@@ -247,8 +256,133 @@ app.get("/auto-toggle", async (req: Request, res: Response) => {
   }
 });
 
+app.get("/rate", async (req: Request, res: Response) => {
+  type QueryData = {
+    from: string;
+    to: string;
+  };
+  let { to, from } = req.query as QueryData;
+  let rate: number = 0;
+  if (!from || !to) {
+    return res.status(422).json({
+      success: false,
+      message: "No currency passed",
+    });
+  }
+  try {
+    let targetedCurrency = Object.values(currencyData).find(
+      (target) => target.code === to
+    );
+
+    if (!targetedCurrency) {
+      throw new Error("Currency not found");
+    }
+
+    const response = await checkExchangeData(from);
+
+    if (!response) {
+      throw new Error("Couldn't fetch currency rate");
+    }
+
+    const data = response.data as ExchangeRates;
+    rate = data[to] ?? 0;
+
+    res.status(200).json({
+      success: true,
+      info: {
+        from,
+        to,
+        rate,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  } finally {
+    if (rate !== 0) {
+      saveSingleRate(from!.toString(), to!.toString(), rate);
+    }
+  }
+});
+app.get("/latest", async (req: Request, res: Response) => {
+  type QueryData = {
+    base: string;
+  };
+  let { base } = req.query as QueryData;
+  if (!base) {
+    return res.status(422).json({
+      success: false,
+      message: "No base currency found",
+    });
+  }
+  try {
+    const response = await checkExchangeData(base);
+    if (!response?.data) {
+      throw new Error("Currency could not be found");
+    }
+
+    const rates = response.data as ExchangeRates;
+
+    // const todayStart = new Date();
+    // todayStart.setHours(0, 0, 0, 0);
+
+    // const todayEnd = new Date();
+    // todayEnd.setHours(23, 59, 59, 999);
+
+    // const baseExist = await prisma.historyData.findFirst({
+    //   where: {
+    //     base,
+    //     date: {
+    //       gte: todayStart,
+    //       lte: todayEnd,
+    //     },
+    //   },
+    // });
+
+    // if (!baseExist) {
+    //   await prisma.historyData.create({ data: { base, rate: rates } });
+    // }
+
+    res.status(200).json({
+      success: true,
+      base,
+      rates,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+});
+app.get("/currencies", async (req: Request, res: Response) => {
+  try {
+    res.status(200).json({
+      success: true,
+      currencies: currencyData,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+});
+app.get("/status", (req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    message: "Foreign Rate API is working normally",
+  });
+});
+
 app.use((req: Request, res: Response) => {
   res.status(404).send("Path not found");
 });
+
+// app.listen(8000, () => {
+//   console.log("hello");
+// });
 
 export default app;

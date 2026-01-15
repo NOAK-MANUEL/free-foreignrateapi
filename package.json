@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch index.ts",
-    "start": "tsx index.ts"
+    "start": "tsx index.ts",
+    "build": "npx prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^5.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
@@ -22,6 +24,7 @@
     "@types/geoip-lite": "^1.4.4",
     "@types/node": "^24.5.2",
     "@types/request-ip": "^0.0.41",
+    "prisma": "^5.0.0",
     "typescript": "^5.9.2"
   }
 }
