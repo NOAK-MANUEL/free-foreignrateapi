@@ -7,7 +7,6 @@ import { currencyData } from "../currencyData.js";
 import { checkExchangeData, saveSingleRate } from "../actions.js";
 import NodeCache from "node-cache";
 import dot from "dotenv";
-import prisma from "../prisma.js";
 
 dot.config({ path: ".env" });
 
